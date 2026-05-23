@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestCont — Gestão de Escritório Contábil</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surf:#1e293b;--surf2:#263548;--bord:#334155;
+  --pri:#3b82f6;--pri2:#2563eb;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--inf:#06b6d4;
+  --tx:#f1f5f9;--tx2:#94a3b8;--tx3:#64748b;--sw:240px;--r:8px;--rl:12px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex}
+/* SIDEBAR */
+.sb{width:var(--sw);background:var(--surf);border-right:1px solid var(--bord);height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:100;transition:.25s}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--bord)}
+.sb-logo h1{font-size:19px;font-weight:800;color:var(--pri);letter-spacing:-.5px}
+.sb-logo p{font-size:11px;color:var(--tx3);margin-top:2px}
+.sb-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:3px}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);color:var(--tx2);cursor:pointer;font-size:13.5px;font-weight:500;border:none;background:none;width:100%;text-align:left;transition:.15s}
+.ni:hover{background:var(--surf2);color:var(--tx)}
+.ni.on{background:rgba(59,130,246,.15);color:var(--pri)}
+.ni svg{flex-shrink:0;width:17px;height:17px}
+.sb-foot{padding:14px 16px;border-top:1px solid var(--bord);font-size:11px;color:var(--tx3)}
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;padding:30px 32px;min-height:100vh}
+/* PAGE HEADER */
+.ph{margin-bottom:26px}
+.ph-row{display:flex;align-items:center;justify-content:space-between}
+.ph h1{font-size:23px;font-weight:700}
+.ph p{font-size:13px;color:var(--tx2);margin-top:3px}
+/* STATS GRID */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:26px}
+.sc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);padding:18px 20px}
+.sc-lbl{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.sc-val{font-size:28px;font-weight:700;margin:6px 0 4px;line-height:1}
+.sc-val.c-pri{color:var(--pri)}.sc-val.c-ok{color:var(--ok)}.sc-val.c-warn{color:var(--warn)}.sc-val.c-err{color:var(--err)}
+.sc-sub{font-size:12px;color:var(--tx2)}
+/* CARD */
+.card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);padding:20px}
+/* TABLE WRAPPER */
+.tw{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);overflow:hidden;margin-bottom:16px}
+.tw-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bord)}
+.tw-title{font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;background:var(--surf2);border-bottom:1px solid var(--bord)}
+td{padding:11px 16px;font-size:13.5px;border-bottom:1px solid rgba(51,65,85,.45);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.b-ok{background:rgba(16,185,129,.13);color:#34d399}
+.b-err{background:rgba(239,68,68,.13);color:#f87171}
+.b-warn{background:rgba(245,158,11,.13);color:#fbbf24}
+.b-inf{background:rgba(6,182,212,.13);color:#22d3ee}
+.b-mute{background:rgba(148,163,184,.1);color:#94a3b8}
+.b-pri{background:rgba(59,130,246,.13);color:#60a5fa}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;font-family:inherit}
+.btn-pri{background:var(--pri);color:#fff}.btn-pri:hover{background:var(--pri2)}
+.btn-ok{background:var(--ok);color:#fff}.btn-ok:hover{background:#059669}
+.btn-ghost{background:transparent;color:var(--tx2);border:1px solid var(--bord)}.btn-ghost:hover{background:var(--surf2);color:var(--tx)}
+.btn-danger{background:transparent;color:var(--err);border:1px solid rgba(239,68,68,.3)}.btn-danger:hover{background:rgba(239,68,68,.1)}
+.btn-warn{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}.btn-warn:hover{background:rgba(245,158,11,.25)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.ic{padding:6px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;color:var(--tx2);transition:.15s;font-size:0}
+.ic:hover{background:var(--surf2);color:var(--tx)}
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px}
+label{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{background:var(--bg);border:1px solid var(--bord);border-radius:var(--r);color:var(--tx);padding:9px 11px;font-size:13.5px;font-family:inherit;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri)}
+textarea{resize:vertical;min-height:72px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+/* SEARCH */
+.srch{position:relative}
+.srch input{padding-left:34px}
+.srch-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3);pointer-events:none}
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rl);width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal-lg{max-width:720px}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--bord)}
+.mh h2{font-size:15px;font-weight:700}
+.mb{padding:22px;display:flex;flex-direction:column;gap:14px}
+.mf{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--bord)}
+/* ALERT BOX */
+.ab{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--r);font-size:13px}
+.ab-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fbbf24}
+.ab-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#f87171}
+.ab-ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);color:#34d399}
+/* BREADCRUMB */
+.bc{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--tx2);margin-bottom:18px}
+.bc-link{cursor:pointer;color:var(--pri)}.bc-link:hover{text-decoration:underline}
+.bc-sep{color:var(--tx3)}
+/* DOT */
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.d-ok{background:var(--ok)}.d-err{background:var(--err)}.d-warn{background:var(--warn)}
+/* EMPTY STATE */
+.es{text-align:center;padding:55px 20px;color:var(--tx2)}
+.es-ico{font-size:44px;margin-bottom:14px;opacity:.4}
+.es h3{font-size:15px;font-weight:600;color:var(--tx3);margin-bottom:6px}
+.es p{font-size:13px;color:var(--tx3)}
+/* PREVIEW BOX */
+.prev-box{padding:12px 16px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:var(--r);font-size:13px}
+/* HISTORY */
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--bg);border:1px solid var(--bord);border-radius:var(--r);font-size:13px}
+/* TOOLTIP */
+[title]{cursor:default}
+/* UTILS */
+.tx-ok{color:var(--ok)}.tx-warn{color:var(--warn)}.tx-err{color:var(--err)}.tx-pri{color:var(--pri)}.tx-mute{color:var(--tx2)}
+.fw7{font-weight:700}.fw6{font-weight:600}.mono{font-family:'Consolas','Courier New',monospace}
+.flex{display:flex}.items-c{align-items:center}.jc-sb{justify-content:space-between}
+.gap2{gap:8px}.gap3{gap:12px}.mt2{margin-top:8px}.mt3{margin-top:12px}.mt4{margin-top:16px}
+.hidden{display:none!important}
+.anim{animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bord);border-radius:3px}
+/* MOBILE TOGGLE */
+.mob-toggle{display:none;position:fixed;top:14px;left:14px;z-index:300;background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:8px;cursor:pointer}
+@media(max-width:768px){
+  .sb{transform:translateX(-100%)}.sb.open{transform:translateX(0)}
+  .main{margin-left:0;padding:16px}
+  .fg2{grid-template-columns:1fr}.fg3{grid-template-columns:1fr}.sg{grid-template-columns:1fr 1fr}
+  .mob-toggle{display:flex}
+  .ph-row{flex-wrap:wrap;gap:10px}
+}
+</style>
+</head>
+<body>
+
+<button class="mob-toggle" onclick="document.getElementById('sb').classList.toggle('open')">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<aside class="sb" id="sb">
+  <div class="sb-logo">
+    <h1>GestCont</h1>
+    <p>Gestão de Escritório Contábil</p>
+  </div>
+  <nav class="sb-nav" id="sb-nav">
+    <button class="ni on" data-view="dashboard" onclick="go('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="ni" data-view="clients" onclick="go('clients')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Clientes
+    </button>
+    <button class="ni" data-view="settings" onclick="go('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Configurações
+    </button>
+  </nav>
+  <div class="sb-foot">v1.0 · dados em localStorage</div>
+</aside>
+
+<main class="main" id="app"></main>
+<div id="modals"></div>
+
+<script>
+// ─── DEFAULTS ───────────────────────────────────────────────
+const OBR_DEFAULT = [
+  {nome:'EFD ICMS/IPI',        per:'mensal',  venc:'15',        obs:''},
+  {nome:'EFD Contribuições',   per:'mensal',  venc:'10',        obs:''},
+  {nome:'eSocial',             per:'mensal',  venc:'7',         obs:''},
+  {nome:'REINF',               per:'mensal',  venc:'15',        obs:''},
+  {nome:'DAS Simples Nacional',per:'mensal',  venc:'20',        obs:''},
+  {nome:'DCTF',                per:'mensal',  venc:'15',        obs:''},
+  {nome:'DCTFWeb',             per:'mensal',  venc:'15',        obs:''},
+  {nome:'ECF',                 per:'anual',   venc:'Julho',     obs:''},
+  {nome:'DEFIS',               per:'anual',   venc:'Março',     obs:''},
+  {nome:'DIRF',                per:'anual',   venc:'Fevereiro', obs:''},
+  {nome:'PGDAS-D',             per:'mensal',  venc:'20',        obs:''},
+  {nome:'NFS-e Municipal',     per:'mensal',  venc:'10',        obs:''},
+];
+
+// ─── STATE ──────────────────────────────────────────────────
+let S = {
+  view: 'dashboard',
+  clientId: null,
+  obrYear: new Date().getFullYear(),
+  q: '',
+  clients: [],
+  obrs: {},        // { [clientId]: [{id,nome,per,venc,obs,grid:{year:[12 statuses]}}] }
+  cfg: { salMin: 1518 }
+};
+
+// ─── STORAGE ────────────────────────────────────────────────
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('gestcont') || 'null');
+    if (d) {
+      S.clients = d.clients||[]; S.obrs = d.obrs||{}; S.cfg = d.cfg||{salMin:1518};
+      // Migrar formato antigo (status único → grid por mês/ano)
+      const curY = String(new Date().getFullYear());
+      Object.keys(S.obrs).forEach(cid => {
+        S.obrs[cid] = (S.obrs[cid]||[]).map(o => {
+          if(!o.grid && o.status !== undefined) {
+            const g = initGrid(o.per, o.venc);
+            if(o.status==='entregue') g.forEach((_,i)=>{ if(g[i]!=='não aplicável') g[i]='entregue'; });
+            else if(o.status==='não aplicável') g.fill('não aplicável');
+            o.grid = {[curY]: g};
+            delete o.status;
+          }
+          return o;
+        });
+      });
+    }
+  } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem('gestcont', JSON.stringify({clients:S.clients, obrs:S.obrs, cfg:S.cfg})); } catch(e) {}
+}
+
+// ─── UTILS ──────────────────────────────────────────────────
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function R(n) { return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n||0); }
+function fmtD(s) { if(!s) return '—'; return new Date(s+'T00:00:00').toLocaleDateString('pt-BR'); }
+function cnpjMask(v) {
+  const d = v.replace(/\D/g,'').slice(0,14);
+  return d.replace(/^(\d{2})(\d)/,'$1.$2')
+          .replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3')
+          .replace(/\.(\d{3})(\d)/,'.$1/$2')
+          .replace(/(\d{4})(\d)/,'$1-$2');
+}
+function salMin(hon) {
+  const s = S.cfg.salMin||1518;
+  if(!hon||!s) return '—';
+  return (hon/s).toFixed(2);
+}
+function daysSince(d) {
+  if(!d) return Infinity;
+  return Math.floor((Date.now()-new Date(d).getTime())/86400000);
+}
+function lastAdj(c) {
+  if(!c.adj||!c.adj.length) return null;
+  return [...c.adj].sort((a,b)=>new Date(b.dt)-new Date(a.dt))[0];
+}
+function needsAdj(c) {
+  if(c.status!=='ativo') return false;
+  const la = lastAdj(c);
+  return la ? daysSince(la.dt)>365 : daysSince(c.dataCad)>365;
+}
+function pendingMonth(clientId) {
+  const obs=S.obrs[clientId]||[];
+  const curYear=new Date().getFullYear(), curMon=new Date().getMonth();
+  return obs.filter(o=>getGrid(o,curYear)[curMon]==='pendente');
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function today() { return new Date().toISOString().slice(0,10); }
+
+// ─── GRID (obrigações mês a mês) ─────────────────────────────
+const MES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MES_ABR  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const CLR = {'pendente':'#dc2626','entregue':'#059669','não aplicável':'#334155'};
+const LBL = {'pendente':'P','entregue':'✓','não aplicável':'—'};
+
+function initGrid(per, venc) {
+  const g = new Array(12).fill('pendente');
+  if(per==='anual') {
+    const mi = MES_FULL.findIndex(m => m.toLowerCase()===(venc||'').toLowerCase());
+    g.fill('não aplicável');
+    if(mi>=0) g[mi]='pendente';
+  } else if(per==='trimestral') {
+    g.fill('não aplicável');
+    [0,3,6,9].forEach(i => g[i]='pendente');
+  }
+  return g;
+}
+
+function getGrid(o, year) {
+  const y = String(year);
+  if(!o.grid) o.grid={};
+  if(!o.grid[y]) o.grid[y]=initGrid(o.per, o.venc);
+  return o.grid[y];
+}
+
+function cycleStatus(clientId, obrId, year, month) {
+  const o=(S.obrs[clientId]||[]).find(x=>x.id===obrId); if(!o) return;
+  const g=getGrid(o,year);
+  const cycle=['pendente','entregue','não aplicável'];
+  g[month]=cycle[(cycle.indexOf(g[month])+1)%3];
+  save();
+  const st=g[month];
+  const cell=document.querySelector(`[data-cell="${obrId}-${month}"]`);
+  if(cell){cell.style.background=CLR[st];cell.textContent=LBL[st];cell.title=MES_FULL[month]+': '+st;}
+  refreshObrStats(clientId,year);
+}
+
+function refreshObrStats(clientId, year) {
+  const obs=S.obrs[clientId]||[];
+  const curMon=new Date().getMonth(), curYear=new Date().getFullYear();
+  let pMes=0,pYear=0,eYear=0,nYear=0;
+  obs.forEach(o=>{
+    if(getGrid(o,curYear)[curMon]==='pendente') pMes++;
+    getGrid(o,year).forEach(st=>{
+      if(st==='pendente')pYear++;else if(st==='entregue')eYear++;else nYear++;
+    });
+  });
+  [['pMes',pMes,true],['pYear',pYear,true],['eYear',eYear,false],['nYear',nYear,false]].forEach(([k,v,warn])=>{
+    const el=document.querySelector(`[data-stat="${k}"]`);
+    if(el){el.textContent=v;if(warn)el.className='sc-val '+(v>0?'c-warn':'c-ok');}
+  });
+}
+
+// ─── NAVIGATION ─────────────────────────────────────────────
+function go(view, clientId) {
+  S.view = view;
+  if(clientId!==undefined) S.clientId = clientId;
+  document.querySelectorAll('.ni').forEach(n=>{
+    n.classList.toggle('on', n.dataset.view===view||(view==='obrs'&&n.dataset.view==='clients'));
+  });
+  document.getElementById('sb').classList.remove('open');
+  render();
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if(S.view==='dashboard') app.innerHTML = vDash();
+  else if(S.view==='clients') app.innerHTML = vClients();
+  else if(S.view==='obrs') app.innerHTML = vObrs();
+  else if(S.view==='settings') app.innerHTML = vSettings();
+}
+
+// ─── VIEW: DASHBOARD ────────────────────────────────────────
+function vDash() {
+  const ativ = S.clients.filter(c=>c.status==='ativo');
+  const tot = ativ.reduce((s,c)=>s+(c.hon||0),0);
+  const alertas = S.clients.filter(needsAdj);
+  let totPend = 0;
+  ativ.forEach(c=>{ totPend += pendingMonth(c.id).length; });
+  const mes = new Date().toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  const hoje = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  let alertBox = '';
+  if(alertas.length) {
+    const rows = alertas.slice(0,6).map(c=>{
+      const la = lastAdj(c);
+      const dias = la ? daysSince(la.dt) : (c.dataCad ? daysSince(c.dataCad) : null);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.18);border-radius:6px;gap:10px">
+        <div><span class="fw6">${esc(c.razao)}</span><span style="font-size:11px;color:var(--tx2);margin-left:8px">${esc(c.cnpj)}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span style="font-size:11px;color:#fbbf24">${dias?dias+' dias sem reajuste':'Sem histórico'}</span>
+          <button class="btn btn-warn btn-sm" onclick="mReaj('${c.id}')">Reajustar</button>
+        </div>
+      </div>`;
+    }).join('');
+    alertBox = `<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="fw6" style="color:#fbbf24;font-size:14px">Clientes sem reajuste há mais de 12 meses</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">${rows}</div>
+      ${alertas.length>6?`<div style="text-align:center;font-size:12px;color:var(--tx2);margin-top:8px">e mais ${alertas.length-6} clientes…</div>`:''}
+    </div>`;
+  }
+
+  // Pending table
+  let pendRows = '';
+  ativ.forEach(c=>{
+    pendingMonth(c.id).forEach(o=>{
+      pendRows += `<tr>
+        <td class="fw6">${esc(c.razao)}</td>
+        <td>${esc(o.nome)}</td>
+        <td><span class="badge ${o.per==='mensal'?'b-pri':'b-inf'}">${o.per}</span></td>
+        <td>${o.per==='mensal'?'Dia '+esc(o.venc):esc(o.venc)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="go('obrs','${c.id}')">Ver obrigações</button></td>
+      </tr>`;
+    });
+  });
+
+  return `<div class="anim">
+    <div class="ph"><h1>Dashboard</h1><p>${hoje}</p></div>
+    <div class="sg">
+      <div class="sc"><div class="sc-lbl">Clientes Ativos</div><div class="sc-val c-pri">${ativ.length}</div><div class="sc-sub">${S.clients.length} total</div></div>
+      <div class="sc"><div class="sc-lbl">Receita Mensal</div><div class="sc-val c-ok" style="font-size:22px">${R(tot)}</div><div class="sc-sub">${(tot/(S.cfg.salMin||1518)).toFixed(1)} salários mínimos</div></div>
+      <div class="sc"><div class="sc-lbl">Obrig. Pendentes</div><div class="sc-val ${totPend>0?'c-warn':'c-ok'}">${totPend}</div><div class="sc-sub">em ${mes}</div></div>
+      <div class="sc"><div class="sc-lbl">Reajustes Pendentes</div><div class="sc-val ${alertas.length>0?'c-err':'c-ok'}">${alertas.length}</div><div class="sc-sub">clientes +12 meses</div></div>
+    </div>
+    ${alertBox}
+    <div class="tw">
+      <div class="tw-head"><span class="tw-title">Obrigações Pendentes — ${mes}</span><button class="btn btn-ghost btn-sm" onclick="go('clients')">Ver clientes</button></div>
+      ${pendRows?`<div style="overflow-x:auto"><table><thead><tr><th>Cliente</th><th>Obrigação</th><th>Periodicidade</th><th>Vencimento</th><th></th></tr></thead><tbody>${pendRows}</tbody></table></div>`
+      :`<div class="es"><div class="es-ico">✅</div><h3>Nenhuma pendência este mês</h3></div>`}
+    </div>
+  </div>`;
+}
+
+// ─── VIEW: CLIENTS ───────────────────────────────────────────
+function vClients() {
+  let list = S.clients;
+  if(S.q) {
+    const q = S.q.toLowerCase();
+    list = list.filter(c=>c.razao.toLowerCase().includes(q)||c.cnpj.includes(q)||(c.cod||'').toLowerCase().includes(q));
+  }
+
+  const rows = list.map(c=>{
+    const la = lastAdj(c);
+    const alerta = needsAdj(c);
+    const sm = salMin(c.hon);
+    return `<tr style="${alerta?'background:rgba(245,158,11,.025)':''}">
+      <td><div style="display:flex;align-items:center;gap:7px"><span class="dot ${c.status==='ativo'?'d-ok':'d-err'}"></span><span class="badge ${c.status==='ativo'?'b-ok':'b-err'}">${c.status}</span></div></td>
+      <td><span class="mono tx-mute" style="font-size:12px">${esc(c.cod)||'—'}</span></td>
+      <td><div class="fw6">${esc(c.razao)}</div>${alerta?'<div style="font-size:11px;color:#fbbf24;margin-top:2px">⚠ Reajuste pendente (+12m)</div>':''}</td>
+      <td><span class="mono" style="font-size:12.5px">${esc(c.cnpj)}</span></td>
+      <td><span class="fw7 tx-ok">${R(c.hon)}</span></td>
+      <td><span>${sm}</span><span class="tx-mute" style="font-size:11px"> SM</span></td>
+      <td>${la?`<div style="font-size:12px"><div>${fmtD(la.dt)}</div><div class="tx-ok">+${la.pct}%</div></div>`:'<span class="tx-mute" style="font-size:12px">—</span>'}</td>
+      <td>
+        <div style="display:flex;gap:2px">
+          <button class="ic" title="Editar cliente" onclick="mEdit('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="ic" title="Histórico de reajustes" onclick="mHist('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></button>
+          <button class="ic ${alerta?'tx-warn':''}" title="Registrar reajuste" onclick="mReaj('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
+          <button class="ic" title="Obrigações tributárias" onclick="go('obrs','${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
+          <button class="ic ${c.status==='ativo'?'':'tx-ok'}" title="${c.status==='ativo'?'Inativar':'Ativar'}" onclick="toggleStatus('${c.id}')" style="${c.status==='ativo'?'color:var(--err)':'color:var(--ok)'}">
+            ${c.status==='ativo'
+              ?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+              :'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 11 12 14 22 4"/></svg>'}
+          </button>
+          <button class="ic" title="Imprimir relatório mensal" onclick="printRelatorio('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="anim">
+    <div class="ph ph-row">
+      <div><h1>Clientes</h1><p>${S.clients.filter(c=>c.status==='ativo').length} ativos · ${S.clients.filter(c=>c.status==='inativo').length} inativos</p></div>
+      <button class="btn btn-pri" onclick="mAdd()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo Cliente
+      </button>
+    </div>
+    <div class="tw">
+      <div class="tw-head">
+        <span class="tw-title">Todos os Clientes</span>
+        <div class="srch">
+          <svg class="srch-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Razão social, CNPJ, código…" style="width:260px" value="${esc(S.q)}" oninput="S.q=this.value;renderTable()" id="sq">
+        </div>
+      </div>
+      ${list.length===0
+        ?`<div class="es"><div class="es-ico">👥</div><h3>${S.clients.length===0?'Nenhum cliente cadastrado':'Nenhum resultado'}</h3><p>${S.clients.length===0?'Clique em "Novo Cliente" para começar':'Tente outro termo de busca'}</p></div>`
+        :`<div style="overflow-x:auto"><table><thead><tr><th>Status</th><th>Código</th><th>Razão Social</th><th>CNPJ</th><th>Honorários</th><th>Sal. Mín.</th><th>Último Reajuste</th><th>Ações</th></tr></thead><tbody id="ctb">${rows}</tbody></table></div>`}
+    </div>
+  </div>`;
+}
+
+function renderTable() {
+  let list = S.clients;
+  if(S.q){
+    const q=S.q.toLowerCase();
+    list=list.filter(c=>c.razao.toLowerCase().includes(q)||c.cnpj.includes(q)||(c.cod||'').toLowerCase().includes(q));
+  }
+  const tb = document.getElementById('ctb');
+  if(!tb) return;
+  const rows = list.map(c=>{
+    const la=lastAdj(c); const alerta=needsAdj(c); const sm=salMin(c.hon);
+    return `<tr style="${alerta?'background:rgba(245,158,11,.025)':''}">
+      <td><div style="display:flex;align-items:center;gap:7px"><span class="dot ${c.status==='ativo'?'d-ok':'d-err'}"></span><span class="badge ${c.status==='ativo'?'b-ok':'b-err'}">${c.status}</span></div></td>
+      <td><span class="mono tx-mute" style="font-size:12px">${esc(c.cod)||'—'}</span></td>
+      <td><div class="fw6">${esc(c.razao)}</div>${alerta?'<div style="font-size:11px;color:#fbbf24;margin-top:2px">⚠ Reajuste pendente (+12m)</div>':''}</td>
+      <td><span class="mono" style="font-size:12.5px">${esc(c.cnpj)}</span></td>
+      <td><span class="fw7 tx-ok">${R(c.hon)}</span></td>
+      <td>${sm}<span class="tx-mute" style="font-size:11px"> SM</span></td>
+      <td>${la?`<div style="font-size:12px"><div>${fmtD(la.dt)}</div><div class="tx-ok">+${la.pct}%</div></div>`:'<span class="tx-mute" style="font-size:12px">—</span>'}</td>
+      <td><div style="display:flex;gap:2px">
+        <button class="ic" title="Editar" onclick="mEdit('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="ic" title="Histórico reajustes" onclick="mHist('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></button>
+        <button class="ic ${alerta?'tx-warn':''}" title="Registrar reajuste" onclick="mReaj('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
+        <button class="ic" title="Obrigações" onclick="go('obrs','${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
+        <button class="ic" title="${c.status==='ativo'?'Inativar':'Ativar'}" onclick="toggleStatus('${c.id}')" style="${c.status==='ativo'?'color:var(--err)':'color:var(--ok)'}">
+          ${c.status==='ativo'
+            ?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+            :'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 11 12 14 22 4"/></svg>'}
+        </button>
+        <button class="ic" title="Imprimir relatório mensal" onclick="printRelatorio('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  tb.innerHTML = rows || `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tx2)">Nenhum resultado encontrado</td></tr>`;
+}
+
+// ─── VIEW: OBRIGAÇÕES (grade mês a mês) ──────────────────────
+function vObrs() {
+  const c = S.clients.find(x=>x.id===S.clientId);
+  if(!c) { go('clients'); return ''; }
+  const obs = S.obrs[S.clientId]||[];
+  const year = S.obrYear;
+  const curYear = new Date().getFullYear(), curMon = new Date().getMonth();
+  const mesAtual = MES_FULL[curMon];
+
+  // Contagens
+  let pMes=0,pYear=0,eYear=0,nYear=0;
+  obs.forEach(o=>{
+    if(getGrid(o,curYear)[curMon]==='pendente') pMes++;
+    getGrid(o,year).forEach(st=>{
+      if(st==='pendente')pYear++;else if(st==='entregue')eYear++;else nYear++;
+    });
+  });
+
+  // Cabeçalho dos meses
+  const mHead = MES_ABR.map((m,i)=>{
+    const cur=(year===curYear&&i===curMon);
+    return `<th style="text-align:center;padding:8px 3px;min-width:36px;white-space:nowrap${cur?';color:var(--pri)':''}">${m}${cur?'<br><div style="width:4px;height:4px;background:var(--pri);border-radius:50%;margin:2px auto 0"></div>':''}</th>`;
+  }).join('');
+
+  // Linha de obrigação com 12 células clicáveis
+  function obrRow(o) {
+    const g = getGrid(o, year);
+    const cells = g.map((st,mi)=>{
+      const isCur=(year===curYear&&mi===curMon);
+      return `<td style="padding:2px 3px;text-align:center">
+        <div data-cell="${o.id}-${mi}"
+          onclick="cycleStatus('${S.clientId}','${o.id}',${year},${mi})"
+          title="${MES_FULL[mi]}: ${st}"
+          style="width:30px;height:30px;border-radius:5px;background:${CLR[st]||CLR.pendente};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;${isCur?'box-shadow:0 0 0 2px #f1f5f9;':''}transition:background .12s;margin:auto;user-select:none"
+        >${LBL[st]||'P'}</div>
+      </td>`;
+    }).join('');
+    return `<tr>
+      <td style="min-width:150px"><span class="fw6">${esc(o.nome)}</span></td>
+      <td><span class="badge ${o.per==='mensal'?'b-pri':o.per==='trimestral'?'b-inf':'b-warn'}">${o.per}</span></td>
+      ${cells}
+      <td style="min-width:120px"><input type="text" value="${esc(o.obs||'')}" placeholder="Obs…" style="font-size:12px;padding:4px 7px" onblur="setObrObs('${S.clientId}','${o.id}',this.value)"></td>
+      <td><button class="ic" style="color:var(--err)" title="Excluir" onclick="delObr('${S.clientId}','${o.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td>
+    </tr>`;
+  }
+
+  function secao(titulo, lista) {
+    if(!lista.length) return '';
+    return `<div class="tw" style="margin-bottom:14px">
+      <div class="tw-head"><span class="tw-title">${titulo}</span><span class="badge b-mute">${lista.length}</span></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th style="min-width:150px">Obrigação</th>
+            <th>Period.</th>
+            ${mHead}
+            <th style="min-width:120px">Observações</th>
+            <th></th>
+          </tr></thead>
+          <tbody>${lista.map(obrRow).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  // Alerta do mês atual
+  const pendNomes = obs.filter(o=>getGrid(o,curYear)[curMon]==='pendente').map(o=>o.nome);
+  const alertMes = pendNomes.length
+    ? `<div class="ab ab-warn" style="margin-bottom:16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span><strong>${pendNomes.length} pendente(s) em ${mesAtual}/${curYear}:</strong> ${pendNomes.join(', ')}</span>
+      </div>`
+    : `<div class="ab ab-ok" style="margin-bottom:16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Nenhuma pendência em ${mesAtual}/${curYear}</span>
+      </div>`;
+
+  return `<div class="anim">
+    <div class="bc"><span class="bc-link" onclick="go('clients')">Clientes</span><span class="bc-sep">›</span><span>${esc(c.razao)}</span><span class="bc-sep">›</span><span>Obrigações ${year}</span></div>
+    <div class="ph ph-row" style="margin-bottom:18px">
+      <div><h1>Obrigações — ${esc(c.razao)}</h1><p>${esc(c.cnpj)} · Código: ${esc(c.cod)||'—'} · Honorários: ${R(c.hon)}</p></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px;background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:3px 8px">
+          <button class="ic" title="Ano anterior" onclick="S.obrYear--;render()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <span class="fw6" style="min-width:38px;text-align:center;font-size:14px">${year}</span>
+          <button class="ic" title="Próximo ano" onclick="S.obrYear++;render()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="printRelatorio('${S.clientId}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir Relatório</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetMes('${S.clientId}')">↺ Resetar mês atual</button>
+        <button class="btn btn-ghost btn-sm" onclick="mAddObr('${S.clientId}')">+ Nova Obrigação</button>
+      </div>
+    </div>
+
+    <div class="sg" style="margin-bottom:18px">
+      <div class="sc"><div class="sc-lbl">Pendentes em ${mesAtual}</div><div class="sc-val ${pMes>0?'c-warn':'c-ok'}" data-stat="pMes">${pMes}</div><div class="sc-sub">mês atual (${curYear})</div></div>
+      <div class="sc"><div class="sc-lbl">Pendentes em ${year}</div><div class="sc-val ${pYear>0?'c-warn':'c-ok'}" data-stat="pYear">${pYear}</div><div class="sc-sub">no ano todo</div></div>
+      <div class="sc"><div class="sc-lbl">Entregues em ${year}</div><div class="sc-val c-ok" data-stat="eYear">${eYear}</div><div class="sc-sub">no ano todo</div></div>
+      <div class="sc"><div class="sc-lbl">Não Aplicável</div><div class="sc-val" data-stat="nYear">${nYear}</div><div class="sc-sub">no ano todo</div></div>
+    </div>
+
+    ${alertMes}
+
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px;font-size:12px;color:var(--tx2);flex-wrap:wrap">
+      <span class="fw6">Legenda:</span>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:16px;height:16px;border-radius:3px;background:#dc2626"></div>Pendente (P)</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:16px;height:16px;border-radius:3px;background:#059669"></div>Entregue (✓)</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:16px;height:16px;border-radius:3px;background:#334155"></div>Não Aplicável (—)</div>
+      <span style="color:var(--tx3)">· Clique para alternar · Mês atual destacado com borda branca</span>
+    </div>
+
+    ${secao('Mensais', obs.filter(o=>o.per==='mensal'))}
+    ${secao('Trimestrais', obs.filter(o=>o.per==='trimestral'))}
+    ${secao('Anuais', obs.filter(o=>o.per==='anual'))}
+    ${obs.length===0?`<div class="es"><div class="es-ico">📋</div><h3>Nenhuma obrigação cadastrada</h3><p>Clique em "+ Nova Obrigação" para adicionar</p></div>`:''}
+  </div>`;
+}
+
+// ─── VIEW: SETTINGS ──────────────────────────────────────────
+function vSettings() {
+  const tot = S.clients.length;
+  const size = JSON.stringify({clients:S.clients,obrs:S.obrs,cfg:S.cfg}).length;
+  const kb = (size/1024).toFixed(1);
+  return `<div class="anim">
+    <div class="ph"><h1>Configurações</h1><p>Parâmetros gerais do sistema</p></div>
+    <div style="max-width:480px;display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Parâmetros Financeiros</div>
+        <div class="fg">
+          <label>Salário Mínimo (R$)</label>
+          <input type="number" id="i-salmin" value="${S.cfg.salMin}" min="0" step="0.01">
+          <div style="font-size:12px;color:var(--tx2);margin-top:2px">Usado para calcular honorários em salários mínimos · Atual: ${R(S.cfg.salMin)}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn btn-pri" id="btn-save-cfg" onclick="saveCfg()">Salvar</button>
+          <button class="btn btn-ghost" onclick="if(confirm('Restaurar para R$ 1.518,00?')){S.cfg.salMin=1518;save();render()}">Restaurar padrão</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Informações do Sistema</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span>Clientes cadastrados</span><span class="badge b-pri">${tot}</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Armazenamento utilizado</span><span class="tx-mute">${kb} KB</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Persistência</span><span class="tx-mute">localStorage</span></div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bord)">
+          <div style="font-size:11px;font-weight:700;color:var(--err);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Zona de Perigo</div>
+          <button class="btn btn-danger btn-sm" onclick="clearAll()">Limpar todos os dados</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Backup e Restauração</div>
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:14px">Exporte todos os dados em JSON para guardar um backup ou transferir para outro computador. Para restaurar, importe um arquivo gerado por esta função.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-pri" onclick="exportBackup()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar Backup
+          </button>
+          <button class="btn btn-ghost" onclick="importBackup()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importar Backup
+          </button>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--tx3)">O arquivo exportado inclui todos os clientes, obrigações, histórico de reajustes e configurações.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── MODALS ──────────────────────────────────────────────────
+function openModal(html) {
+  document.getElementById('modals').innerHTML = `<div class="overlay" onclick="if(event.target===this)closeModal()">${html}</div>`;
+}
+function closeModal() { document.getElementById('modals').innerHTML = ''; }
+
+function mAdd() {
+  openModal(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mh"><h2>Novo Cliente</h2><button class="ic" onclick="closeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mb">
+      <div class="fg2">
+        <div class="fg full"><label>Razão Social *</label><input id="m-razao" placeholder="Nome da empresa" autofocus></div>
+        <div class="fg"><label>CNPJ *</label><input id="m-cnpj" placeholder="00.000.000/0000-00" maxlength="18" oninput="this.value=cnpjMask(this.value)"></div>
+        <div class="fg"><label>Código Interno</label><input id="m-cod" placeholder="CLI-001"></div>
+        <div class="fg"><label>Honorários Mensais (R$) *</label><input type="number" id="m-hon" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="fg"><label>Status</label><select id="m-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+        <div class="fg full"><label>Data de Cadastro</label><input type="date" id="m-dataCad" value="${today()}"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-pri" onclick="doAdd()">Cadastrar</button></div>
+  </div>`);
+}
+
+function mEdit(id) {
+  const c = S.clients.find(x=>x.id===id); if(!c) return;
+  openModal(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mh"><h2>Editar Cliente</h2><button class="ic" onclick="closeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mb">
+      <div class="fg2">
+        <div class="fg full"><label>Razão Social *</label><input id="m-razao" value="${esc(c.razao)}"></div>
+        <div class="fg"><label>CNPJ *</label><input id="m-cnpj" value="${esc(c.cnpj)}" maxlength="18" oninput="this.value=cnpjMask(this.value)"></div>
+        <div class="fg"><label>Código Interno</label><input id="m-cod" value="${esc(c.cod||'')}"></div>
+        <div class="fg"><label>Honorários Mensais (R$)</label><input type="number" id="m-hon" value="${c.hon||0}" min="0" step="0.01"></div>
+        <div class="fg"><label>Status</label><select id="m-status"><option value="ativo" ${c.status==='ativo'?'selected':''}>Ativo</option><option value="inativo" ${c.status==='inativo'?'selected':''}>Inativo</option></select></div>
+        <div class="fg full"><label>Data de Cadastro</label><input type="date" id="m-dataCad" value="${c.dataCad||''}"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-pri" onclick="doEdit('${id}')">Salvar</button></div>
+  </div>`);
+}
+
+function mReaj(id) {
+  const c = S.clients.find(x=>x.id===id); if(!c) return;
+  const cur = c.hon||0;
+  openModal(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mh"><h2>Registrar Reajuste</h2><button class="ic" onclick="closeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mb">
+      <div style="font-size:13px;color:var(--tx2)">${esc(c.razao)}</div>
+      <div style="padding:12px 14px;background:var(--bg);border:1px solid var(--bord);border-radius:8px">
+        <div style="font-size:11px;color:var(--tx2)">Honorário atual</div>
+        <div class="fw7 tx-ok" style="font-size:22px">${R(cur)}</div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label>Novo Valor (R$) *</label><input type="number" id="r-novo" value="${cur}" min="0" step="0.01" oninput="prevReaj(${cur})"></div>
+        <div class="fg"><label>Data do Reajuste *</label><input type="date" id="r-dt" value="${today()}"></div>
+      </div>
+      <div id="r-prev" class="prev-box"><span class="tx-mute">Altere o valor para ver o percentual calculado</span></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-ok" onclick="doReaj('${id}',${cur})">Registrar Reajuste</button></div>
+  </div>`);
+}
+
+function prevReaj(cur) {
+  const novo = parseFloat(document.getElementById('r-novo')?.value||0);
+  const el = document.getElementById('r-prev'); if(!el) return;
+  if(!novo||novo<=0){el.innerHTML='<span class="tx-mute">Altere o valor para ver o percentual calculado</span>';return;}
+  const diff = novo-cur;
+  const pct = cur>0?((diff/cur)*100).toFixed(2):'—';
+  const col = diff>=0?'var(--ok)':'var(--err)';
+  const sig = diff>=0?'+':'';
+  el.innerHTML=`<div style="display:flex;gap:24px;align-items:center">
+    <div><div style="font-size:11px;color:var(--tx2)">Variação</div><div class="fw7" style="font-size:20px;color:${col}">${sig}${pct}%</div></div>
+    <div><div style="font-size:11px;color:var(--tx2)">Diferença</div><div class="fw7" style="font-size:20px;color:${col}">${sig}${R(diff)}</div></div>
+    <div><div style="font-size:11px;color:var(--tx2)">Novo valor</div><div class="fw7" style="font-size:20px">${R(novo)}</div></div>
+  </div>`;
+}
+
+function mHist(id) {
+  const c = S.clients.find(x=>x.id===id); if(!c) return;
+  const adj = [...(c.adj||[])].sort((a,b)=>new Date(b.dt)-new Date(a.dt));
+  const rows = adj.map(r=>`<tr>
+    <td>${fmtD(r.dt)}</td>
+    <td>${R(r.ant)}</td>
+    <td class="fw6">${R(r.novo)}</td>
+    <td style="color:${r.pct>=0?'var(--ok)':'var(--err)'}">${r.pct>=0?'+':''}${r.pct}%</td>
+    <td><button class="ic" style="color:var(--err)" title="Excluir" onclick="delAdj('${id}','${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td>
+  </tr>`).join('');
+  openModal(`<div class="modal modal-lg" onclick="event.stopPropagation()">
+    <div class="mh"><h2>Histórico — ${esc(c.razao)}</h2><button class="ic" onclick="closeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mb">
+      ${adj.length?`<table><thead><tr><th>Data</th><th>Valor Anterior</th><th>Novo Valor</th><th>Variação</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+      :`<div class="es" style="padding:30px"><h3>Nenhum reajuste registrado</h3><p>Use o botão de reajuste para registrar o histórico</p></div>`}
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal()">Fechar</button><button class="btn btn-pri" onclick="closeModal();mReaj('${id}')">Novo Reajuste</button></div>
+  </div>`);
+}
+
+function mAddObr(clientId) {
+  openModal(`<div class="modal" onclick="event.stopPropagation()">
+    <div class="mh"><h2>Nova Obrigação</h2><button class="ic" onclick="closeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="mb">
+      <div class="fg"><label>Nome *</label><input id="o-nome" placeholder="Ex: SPED Fiscal" autofocus></div>
+      <div class="fg2">
+        <div class="fg"><label>Periodicidade</label><select id="o-per"><option value="mensal">Mensal</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
+        <div class="fg"><label>Vencimento</label><input id="o-venc" placeholder="Ex: 15 ou Julho"></div>
+      </div>
+      <div class="fg"><label>Status inicial</label><select id="o-status"><option value="pendente">Pendente</option><option value="entregue">Entregue</option><option value="não aplicável">Não Aplicável</option></select></div>
+      <div class="fg"><label>Observações</label><textarea id="o-obs" placeholder="Observações adicionais…"></textarea></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-pri" onclick="doAddObr('${clientId}')">Adicionar</button></div>
+  </div>`);
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────
+function val(id) { return document.getElementById(id)?.value?.trim()||''; }
+
+function doAdd() {
+  const razao = val('m-razao'); if(!razao){alert('Razão Social é obrigatória');return;}
+  const cnpj = val('m-cnpj'); if(!cnpj){alert('CNPJ é obrigatório');return;}
+  const hon = parseFloat(document.getElementById('m-hon')?.value||0);
+  const id = uid();
+  const curY = String(new Date().getFullYear());
+  S.clients.push({id, razao, cnpj, cod:val('m-cod'), hon, status:val('m-status')||'ativo', dataCad:val('m-dataCad'), adj:[]});
+  S.obrs[id] = OBR_DEFAULT.map(o=>({...o, id:uid(), grid:{[curY]:initGrid(o.per,o.venc)}}));
+  save(); closeModal(); render();
+}
+
+function doEdit(id) {
+  const c = S.clients.find(x=>x.id===id); if(!c) return;
+  c.razao = val('m-razao')||c.razao;
+  c.cnpj  = val('m-cnpj')||c.cnpj;
+  c.cod   = val('m-cod');
+  c.hon   = parseFloat(document.getElementById('m-hon')?.value||c.hon);
+  c.status = val('m-status')||c.status;
+  c.dataCad = val('m-dataCad')||c.dataCad;
+  save(); closeModal(); render();
+}
+
+function toggleStatus(id) {
+  const c = S.clients.find(x=>x.id===id); if(!c) return;
+  c.status = c.status==='ativo'?'inativo':'ativo';
+  save(); render();
+}
+
+function doReaj(id, cur) {
+  const novo = parseFloat(document.getElementById('r-novo')?.value||0);
+  const dt   = val('r-dt');
+  if(!novo||novo<=0){alert('Informe um valor válido');return;}
+  if(!dt){alert('Informe a data');return;}
+  const c = S.clients.find(x=>x.id===id); if(!c) return;
+  const pct = cur>0 ? parseFloat(((novo-cur)/cur*100).toFixed(2)) : 0;
+  if(!c.adj) c.adj=[];
+  c.adj.push({id:uid(), dt, ant:cur, novo, pct});
+  c.hon = novo;
+  save(); closeModal(); render();
+}
+
+function delAdj(clientId, adjId) {
+  if(!confirm('Excluir este registro?')) return;
+  const c = S.clients.find(x=>x.id===clientId); if(!c) return;
+  const removing = c.adj.find(a=>a.id===adjId);
+  c.adj = c.adj.filter(a=>a.id!==adjId);
+  // Revert honorario if it was the latest
+  const sorted = [...c.adj].sort((a,b)=>new Date(b.dt)-new Date(a.dt));
+  if(sorted.length>0) c.hon = sorted[0].novo;
+  else if(removing) c.hon = removing.ant;
+  save(); closeModal(); mHist(clientId);
+}
+
+function setObrStatus(clientId, obrId, status) {
+  const o = (S.obrs[clientId]||[]).find(x=>x.id===obrId); if(!o) return;
+  o.status = status; save();
+}
+
+function setObrObs(clientId, obrId, obs) {
+  const o = (S.obrs[clientId]||[]).find(x=>x.id===obrId); if(!o) return;
+  o.obs = obs; save();
+}
+
+function delObr(clientId, obrId) {
+  if(!confirm('Excluir esta obrigação?')) return;
+  S.obrs[clientId] = (S.obrs[clientId]||[]).filter(o=>o.id!==obrId);
+  save(); render();
+}
+
+function doAddObr(clientId) {
+  const nome=val('o-nome'); if(!nome){alert('Nome é obrigatório');return;}
+  const per=val('o-per')||'mensal', venc=val('o-venc'), initSt=val('o-status')||'pendente';
+  const curY=String(new Date().getFullYear());
+  const g=initGrid(per,venc);
+  if(initSt!=='pendente') g.forEach((_,i)=>{ if(g[i]!=='não aplicável') g[i]=initSt; });
+  if(!S.obrs[clientId]) S.obrs[clientId]=[];
+  S.obrs[clientId].push({id:uid(), nome, per, venc, obs:val('o-obs'), grid:{[curY]:g}});
+  save(); closeModal(); render();
+}
+
+function resetMes(clientId) {
+  const curMon=new Date().getMonth(), curYear=new Date().getFullYear();
+  const mes=MES_FULL[curMon];
+  if(!confirm(`Resetar todas as obrigações de ${mes}/${curYear} para "Pendente"?`)) return;
+  (S.obrs[clientId]||[]).forEach(o=>{
+    const g=getGrid(o,curYear);
+    if(g[curMon]!=='não aplicável') g[curMon]='pendente';
+  });
+  save(); render();
+}
+
+function saveCfg() {
+  const v = parseFloat(document.getElementById('i-salmin')?.value||0);
+  if(!v||v<=0){alert('Valor inválido');return;}
+  S.cfg.salMin = v; save(); render();
+}
+
+function clearAll() {
+  if(!confirm('ATENÇÃO: todos os dados serão apagados permanentemente. Continuar?')) return;
+  if(!confirm('Tem certeza? Esta ação não pode ser desfeita!')) return;
+  S.clients=[]; S.obrs={}; S.cfg={salMin:1518};
+  save(); render();
+}
+
+// ─── RELATÓRIO ───────────────────────────────────────────────
+function printRelatorio(clientId) {
+  const c = S.clients.find(x=>x.id===clientId); if(!c) return;
+  const obs = S.obrs[clientId]||[];
+  const curYear = new Date().getFullYear(), curMon = new Date().getMonth();
+  const mesNome = MES_FULL[curMon];
+  const now = new Date();
+
+  const obrsMes = obs.map(o=>({...o, stMes: getGrid(o,curYear)[curMon]}));
+  const pend = obrsMes.filter(o=>o.stMes==='pendente').length;
+  const entg = obrsMes.filter(o=>o.stMes==='entregue').length;
+  const na   = obrsMes.filter(o=>o.stMes==='não aplicável').length;
+
+  const stCor   = {'pendente':'#dc2626','entregue':'#059669','não aplicável':'#6b7280'};
+  const stLabel = {'pendente':'⏳ Pendente','entregue':'✅ Entregue','não aplicável':'— Não Aplicável'};
+  const stBg    = {'pendente':'#fef2f2','entregue':'#f0fdf4','não aplicável':'#f9fafb'};
+
+  const rows = obrsMes.map(o=>`
+    <tr style="background:${stBg[o.stMes]||'#fff'}">
+      <td>${o.nome}</td>
+      <td style="text-align:center"><span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;background:#e0e7ff;color:#3730a3">${o.per}</span></td>
+      <td style="text-align:center;font-weight:600;color:${stCor[o.stMes]||'#dc2626'}">${stLabel[o.stMes]||'Pendente'}</td>
+      <td style="color:#6b7280">${o.obs||'—'}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Relatório — ${c.razao} — ${mesNome}/${curYear}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:32px;font-size:13px}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;padding-bottom:16px;border-bottom:3px solid #1d4ed8}
+.logo{font-size:21px;font-weight:800;color:#1d4ed8;letter-spacing:-.5px}
+.logo-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+.rpt-ttl{text-align:right}.rpt-ttl h2{font-size:15px;font-weight:700}.rpt-ttl p{font-size:12px;color:#6b7280;margin-top:3px}
+.cb{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;margin-bottom:18px}
+.cl{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.4px}
+.cv{font-size:14px;font-weight:600;margin-top:2px}.cv.g{color:#059669}
+.sm{display:flex;gap:10px;margin-bottom:18px}
+.smc{flex:1;padding:11px;border-radius:6px;text-align:center}
+.smc .n{font-size:22px;font-weight:800;line-height:1}.smc .l{font-size:11px;margin-top:3px}
+.c-bl{background:#eff6ff;color:#1d4ed8}.c-rd{background:#fef2f2;color:#dc2626}.c-gr{background:#f0fdf4;color:#059669}.c-gy{background:#f9fafb;color:#6b7280}
+table{width:100%;border-collapse:collapse;margin-bottom:18px}
+th{background:#1d4ed8;color:#fff;padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:13px}
+tr:last-child td{border-bottom:none}
+.sign{margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.sl{border-top:1px solid #374151;padding-top:6px;text-align:center;font-size:12px;color:#6b7280}
+.ft{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:11px;color:#9ca3af}
+@media print{body{padding:15px}@page{margin:1.5cm}}
+</style></head><body>
+<div class="hd">
+  <div><div class="logo">GestCont</div><div class="logo-sub">Sistema de Gestão de Escritório Contábil</div></div>
+  <div class="rpt-ttl"><h2>Relatório Mensal de Obrigações Tributárias</h2><p>${mesNome} / ${curYear}</p></div>
+</div>
+<div class="cb">
+  <div><div class="cl">Razão Social</div><div class="cv">${c.razao}</div></div>
+  <div><div class="cl">CNPJ</div><div class="cv">${c.cnpj}</div></div>
+  <div><div class="cl">Código Interno</div><div class="cv">${c.cod||'—'}</div></div>
+  <div><div class="cl">Honorários Mensais</div><div class="cv g">${R(c.hon)}</div></div>
+</div>
+<div class="sm">
+  <div class="smc c-bl"><div class="n">${obs.length}</div><div class="l">Total</div></div>
+  <div class="smc c-rd"><div class="n">${pend}</div><div class="l">Pendentes</div></div>
+  <div class="smc c-gr"><div class="n">${entg}</div><div class="l">Entregues</div></div>
+  <div class="smc c-gy"><div class="n">${na}</div><div class="l">Não Aplicável</div></div>
+</div>
+<table>
+  <thead><tr>
+    <th>Obrigação</th>
+    <th style="width:110px;text-align:center">Periodicidade</th>
+    <th style="width:150px;text-align:center">Status — ${mesNome}</th>
+    <th>Observações</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<div class="sign">
+  <div class="sl">Responsável pelo Escritório</div>
+  <div class="sl">Cliente / Representante Legal</div>
+</div>
+<div class="ft">
+  <span>Gerado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · GestCont</span>
+  <span>${c.razao} · ${c.cnpj}</span>
+</div>
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`;
+
+  const w = window.open('','_blank');
+  if(!w) { alert('Permita pop-ups para imprimir o relatório.'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+// ─── BACKUP ──────────────────────────────────────────────────
+function exportBackup() {
+  const payload = {clients:S.clients, obrs:S.obrs, cfg:S.cfg};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `gestcont_backup_${today()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importBackup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        if(!Array.isArray(d.clients) || typeof d.obrs !== 'object') {
+          alert('Arquivo inválido: não é um backup do GestCont.'); return;
+        }
+        const n = d.clients.length;
+        if(!confirm(`Importar backup com ${n} cliente(s)?\n\nATENÇÃO: os dados atuais serão substituídos.`)) return;
+        localStorage.setItem('gestcont', JSON.stringify(d));
+        location.reload();
+      } catch(err) {
+        alert('Erro ao ler o arquivo. Verifique se é um backup válido do GestCont.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+load();
+go('dashboard');
+</script>
+</body>
+</html>
